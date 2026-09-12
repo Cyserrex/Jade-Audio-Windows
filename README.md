@@ -31,7 +31,8 @@ firmware 2.20).
 - Preset switching (Vocal / Classic / Bass / USER1 / EQ Off on the JA11)
 - EQ global gain and output volume
 - Browse, search and apply presets from FiiO's online library
-- Sign in to your FiiO account to reach the presets saved there
+- Sign in to your FiiO account to reach the presets saved there, and — in the
+  C# app — stay signed in, save new presets to it, and delete them again
 - Export / import a single preset, and back up or restore **every** preset
 - Capability probing: only the controls the attached device actually answers
   are shown, so other FiiO dongles get a sensible subset rather than dead knobs

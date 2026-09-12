@@ -26,7 +26,10 @@ other.
   filter shape per band, plus global gain and output volume.
 - **Preset library** — Handpick (671 community presets for the JA11 at the time
   of writing), Official, My presets, and lookup by share code, with search and
-  paging. Browsing and applying need no account.
+  paging. Selecting a preset draws its curve, so you can judge the shape before
+  it goes anywhere near the device. Browsing and applying need no account.
+- **Save your own presets** to your FiiO account, and delete them again.
+  Publishing one to the community list is a separate, opt-in tick.
 - **Device** — what the dongle reports about itself, and backup/restore of every
   preset to a JSON file.
 - Only the controls the attached device actually answers are shown, so other
@@ -37,7 +40,11 @@ other.
 Optional, and only needed for the presets saved on your own FiiO account. You
 type your username, password and the CAPTCHA yourself; the password is forwarded
 to FiiO's token endpoint and kept nowhere else — not on disk, not in a log.
-Tokens live in memory, so a restart means signing in again.
+
+**Stay signed in** keeps only the tokens, in
+`%LOCALAPPDATA%\JadeAudioControl\session.dat`, encrypted with DPAPI for your
+Windows account — so the file is meaningless on another account or machine.
+Signing out erases it.
 
 ## Also in the repository
 

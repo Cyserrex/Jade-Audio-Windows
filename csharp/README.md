@@ -31,7 +31,8 @@ drag. Editing a value in a row moves the handle and the other way round; writes
 are debounced so a drag does not flood the device.
 
 **Preset library** — Handpick (671 community presets for the JA11), Official,
-My presets, and lookup by share code, with search and paging.
+My presets, and lookup by share code, with search and paging. Presets you make
+can be saved to your own account, and deleted from it again.
 
 ![Preset library](docs/library.png)
 
@@ -98,12 +99,36 @@ Releases are built by GitHub Actions rather than by hand - see
 
 ## Accounts
 
+Browsing, searching and applying presets need no account at all. Signing in adds
+two things: the presets saved on your FiiO account, and the ability to save new
+ones to it.
+
 Signing in is the user's own doing: they type their username, password and the
 CAPTCHA into the login window. The password is handed to FiiO's token endpoint
-and dropped — it is never stored, logged or written to disk. Tokens live in
-memory for the life of the process, so a restart means signing in again.
+and dropped — it is never stored, logged or written to disk.
 
-Browsing, searching and applying presets need no account at all.
+### Stay signed in
+
+Ticking it keeps **only the tokens**, in
+`%LOCALAPPDATA%\JadeAudioControl\session.dat`, encrypted with DPAPI under
+`DataProtectionScope.CurrentUser`. The file is therefore meaningless to another
+Windows account or another machine, and signing out erases it.
+
+A stored token is trusted only as far as the server agrees: on startup the
+profile is re-read, an expired token is refreshed through `grant_type=refresh_token`
+first, and anything that does not work is discarded rather than left to fail
+later. Nothing about startup blocks on the account server.
+
+### Saving a preset
+
+**Save online** on the equaliser page writes the live bands to the account
+through `/add-peq`, as `peqList` entries carrying `styleName`, `description`,
+`deviceType`, `masterGain` and `eqParamsJson`. `/update-peq` and `/delete-peq`
+sit behind the same shape.
+
+Sharing publicly is a separate tick that also asks for confirmation, since it
+puts the preset and your FiiO display name in front of everyone browsing
+Handpick. Deleting asks too — the server offers no undo.
 
 ![Sign in](docs/login.png)
 
