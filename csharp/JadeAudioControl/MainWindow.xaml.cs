@@ -787,6 +787,30 @@ public partial class MainWindow : Window
                 Margin = new Thickness(0, 10, 0, 0),
             });
 
+        // The shape of a preset says more than five rows of numbers do, so draw
+        // it the same way the equaliser page does. Hit testing is off: this one
+        // is for looking at, not dragging.
+        if (preset.Bands.Count > 0)
+        {
+            var preview = new EqCurve
+            {
+                Height = 150,
+                IsHitTestVisible = false,
+                GainRange = _caps.BandCount > 0 ? _caps.GainRange : (-12, 12),
+            };
+            preview.SetBands(preset.Bands);
+            Add(new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x12, 0x15, 0x1A)),
+                BorderBrush = (Brush)Application.Current.Resources["Stroke"],
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Margin = new Thickness(0, 12, 0, 0),
+                Padding = new Thickness(2),
+                Child = preview,
+            });
+        }
+
         Add(new TextBlock
         {
             Text = $"Global gain {FormatDb(preset.GlobalGain)}",

@@ -243,6 +243,10 @@ public sealed class CloudClient
         {
             response = await _http.SendAsync(request).ConfigureAwait(false);
         }
+        catch (TaskCanceledException)
+        {
+            throw new CloudException("The preset server took too long to answer. Try again.");
+        }
         catch (Exception exc)
         {
             throw new CloudException($"Could not reach the preset server: {exc.Message}");
@@ -367,6 +371,10 @@ public sealed class CloudClient
         try
         {
             response = await _http.SendAsync(request).ConfigureAwait(false);
+        }
+        catch (TaskCanceledException)
+        {
+            throw new AuthException("The account server took too long to answer. Try again.");
         }
         catch (Exception exc)
         {
