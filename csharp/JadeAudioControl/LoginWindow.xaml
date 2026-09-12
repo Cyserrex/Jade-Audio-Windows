@@ -1,0 +1,96 @@
+<Window x:Class="JadeAudioControl.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sign in to FiiO"
+        Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent" AllowsTransparency="True" WindowStyle="None"
+        ResizeMode="NoResize" UseLayoutRounding="True">
+
+    <Border Background="{StaticResource Bg}" CornerRadius="10" BorderBrush="#2A303A" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Height="36" Background="Transparent" MouseLeftButtonDown="Drag">
+                <Button Style="{StaticResource CloseButton}" Content="&#xE8BB;" HorizontalAlignment="Right"
+                        Click="Cancel_Click" />
+            </Grid>
+
+            <StackPanel Grid.Row="1" Margin="26,0,26,24">
+                <TextBlock Text="Sign in" Style="{StaticResource Display}" />
+                <TextBlock Text="Your FiiO account, the same one fiiocontrol.fiio.com uses."
+                           Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,0,18" />
+
+                <TextBlock Text="Username" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                <TextBox x:Name="UsernameBox" Style="{StaticResource ModernTextBox}" />
+
+                <TextBlock Text="Password" Style="{StaticResource Caption}" Margin="0,14,0,5" />
+                <Grid>
+                    <PasswordBox x:Name="PasswordBox" Style="{StaticResource ModernPasswordBox}" />
+                    <TextBox x:Name="PasswordPlain" Style="{StaticResource ModernTextBox}"
+                             Visibility="Collapsed" />
+                </Grid>
+                <CheckBox x:Name="RevealBox" Style="{StaticResource ModernCheck}" Content="Show password"
+                          Margin="0,8,0,0" Checked="Reveal_Changed" Unchecked="Reveal_Changed" />
+
+                <TextBlock Text="Verification code" Style="{StaticResource Caption}" Margin="0,14,0,5" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="CaptchaBox" Style="{StaticResource ModernTextBox}" />
+                    <Border Grid.Column="1" Width="116" Height="42" Margin="8,0,0,0" CornerRadius="8"
+                            Background="White" Cursor="Hand" MouseLeftButtonDown="Captcha_Click"
+                            ClipToBounds="True">
+                        <Grid>
+                            <TextBlock x:Name="CaptchaStatus" Text="loading" Foreground="#555"
+                                       FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image x:Name="CaptchaImage" Stretch="Uniform" Margin="2" />
+                        </Grid>
+                    </Border>
+                    <Button Grid.Column="2" Style="{StaticResource GhostButton}" Content="New"
+                            Margin="8,0,0,0" Click="Captcha_Click" />
+                </Grid>
+                <TextBlock Text="Click the image for a different one." Style="{StaticResource Caption}"
+                           Margin="0,6,0,0" />
+
+                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                    <CheckBox x:Name="AgreeBox" Style="{StaticResource ModernCheck}" Content="I agree to FiiO's" />
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">
+                        <Hyperlink Foreground="{StaticResource Accent}" TextDecorations="Underline"
+                                   Click="Privacy_Click">Privacy Policy</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource Muted}"
+                               Text="and" FontSize="12.5" />
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">
+                        <Hyperlink Foreground="{StaticResource Accent}" TextDecorations="Underline"
+                                   Click="Agreement_Click">User Agreement</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+
+                <TextBlock x:Name="ErrorText" Style="{StaticResource Caption}"
+                           Foreground="{StaticResource Danger}" TextWrapping="Wrap" Margin="0,12,0,0" />
+
+                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                    <Button x:Name="SignInButton" Style="{StaticResource PrimaryButton}" Content="Sign in"
+                            Click="SignIn_Click" Width="110" />
+                    <Button Style="{StaticResource GhostButton}" Content="Create account" Margin="8,0,0,0"
+                            Click="Register_Click" />
+                    <Button Style="{StaticResource GhostButton}" Content="Cancel" Margin="8,0,0,0"
+                            Click="Cancel_Click" />
+                </StackPanel>
+
+                <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Stroke}"
+                        BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,18,0,0">
+                    <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap"
+                               Text="Your password goes straight to FiiO and is kept nowhere else — not on disk, not in a log. The session token lives in memory only, so you sign in again after a restart." />
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

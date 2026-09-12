@@ -1,0 +1,16 @@
+# Build output
+dist/
+csharp/dist/
+csharp/**/bin/
+csharp/**/obj/
+build/
+*.spec
+
+# Python
+__pycache__/
+*.pyc
+run.log
+
+# A snapshot of one particular device's presets, including personal tuning.
+# Make your own with: python -m jadeaudio.cli backup presets.json
+ja11-presets-backup.json

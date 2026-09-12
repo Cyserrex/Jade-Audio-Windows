@@ -1,0 +1,4 @@
+hidapi>=0.14
+requests>=2.31
+cryptography>=42
+pillow>=10

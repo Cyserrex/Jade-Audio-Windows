@@ -1,0 +1,311 @@
+<Window x:Class="JadeAudioControl.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctl="clr-namespace:JadeAudioControl.Controls"
+        Title="Jade Audio Control"
+        Width="1120" Height="740" MinWidth="940" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        AllowsTransparency="True" WindowStyle="None"
+        TextOptions.TextFormattingMode="Ideal"
+        UseLayoutRounding="True">
+
+    <Border Background="{StaticResource Bg}" CornerRadius="10" BorderBrush="#2A303A" BorderThickness="1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="212" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="#0A0C0F" CornerRadius="10,0,0,10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="18,20,0,18">
+                        <Border Width="32" Height="32" CornerRadius="9" Background="{StaticResource AccentGradient}">
+                            <TextBlock Text="JA" Foreground="#07110F" FontFamily="{StaticResource DisplayFont}"
+                                       FontWeight="Bold" FontSize="12.5"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Jade Audio" Style="{StaticResource H2}" />
+                            <TextBlock Text="Control" Style="{StaticResource Caption}" Margin="0,-1,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Device chip -->
+                    <Border Grid.Row="1" Margin="12,0,12,14" Background="{StaticResource Surface}"
+                            BorderBrush="{StaticResource Stroke}" BorderThickness="1"
+                            CornerRadius="10" Padding="12,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="{StaticResource Danger}"
+                                         VerticalAlignment="Center" />
+                                <TextBlock x:Name="DeviceName" Text="Searching..." Style="{StaticResource Body}"
+                                           Margin="7,0,0,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <TextBlock x:Name="DeviceSub" Text="" Style="{StaticResource Caption}" Margin="14,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="2">
+                        <RadioButton x:Name="NavEq" Style="{StaticResource NavButton}" Content="Equalizer"
+                                     IsChecked="True" Checked="Nav_Checked" Tag="eq" />
+                        <RadioButton x:Name="NavLibrary" Style="{StaticResource NavButton}" Content="Preset library"
+                                     Checked="Nav_Checked" Tag="library" />
+                        <RadioButton x:Name="NavDevice" Style="{StaticResource NavButton}" Content="Device"
+                                     Checked="Nav_Checked" Tag="device" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="3" Margin="12,0,12,16">
+                        <TextBlock x:Name="AccountLine" Text="Not signed in" Style="{StaticResource Caption}"
+                                   Margin="4,0,0,7" />
+                        <Button x:Name="AccountButton" Style="{StaticResource GhostButton}" Content="Sign in"
+                                Click="Account_Click" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Title bar -->
+                <Grid Grid.Row="0" Height="40" Background="Transparent" MouseLeftButtonDown="TitleBar_Drag">
+                    <TextBlock x:Name="PageTitle" Text="Equalizer" Style="{StaticResource Body}"
+                               Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="22,0,0,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource ChromeButton}" Content="&#xE921;" Click="Minimise_Click"
+                                ToolTip="Minimise" />
+                        <Button x:Name="MaxButton" Style="{StaticResource ChromeButton}" Content="&#xE922;"
+                                Click="Maximise_Click" ToolTip="Maximise" />
+                        <Button Style="{StaticResource CloseButton}" Content="&#xE8BB;" Click="Close_Click"
+                                ToolTip="Close" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Pages -->
+                <Grid Grid.Row="1" Margin="22,0,22,0">
+
+                    <!-- Equalizer -->
+                    <Grid x:Name="PageEq">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Preset row -->
+                        <Grid Grid.Row="0" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Preset" Style="{StaticResource Caption}" VerticalAlignment="Center"
+                                           Margin="0,0,10,0" />
+                                <ComboBox x:Name="PresetBox" Style="{StaticResource ModernCombo}" Width="150"
+                                          SelectionChanged="Preset_Changed" />
+                                <Button Style="{StaticResource GhostButton}" Content="Browse online"
+                                        Margin="10,0,0,0" Click="BrowseOnline_Click" />
+                                <Button Style="{StaticResource GhostButton}" Content="Export"
+                                        Margin="6,0,0,0" Click="Export_Click" />
+                                <Button Style="{StaticResource GhostButton}" Content="Import"
+                                        Margin="6,0,0,0" Click="Import_Click" />
+                            </StackPanel>
+                            <TextBlock Text="Edits apply and persist immediately" Style="{StaticResource Caption}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Curve -->
+                        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0" MinHeight="190"
+                                Background="#12151A">
+                            <ctl:EqCurve x:Name="Curve" Margin="2" />
+                        </Border>
+
+                        <!-- Bands -->
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="330" Margin="0,14,0,0">
+                            <ItemsControl x:Name="BandList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Global controls -->
+                        <Grid Grid.Row="3" Margin="0,14,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border x:Name="PreampCard" Grid.Column="0" Style="{StaticResource Card}"
+                                    Margin="0,0,7,0" Padding="14,11">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Global gain" Style="{StaticResource Caption}"
+                                               VerticalAlignment="Center" Width="78" />
+                                    <Slider x:Name="PreampSlider" Grid.Column="1" Style="{StaticResource ModernSlider}"
+                                            Minimum="-12" Maximum="12" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                            ValueChanged="Preamp_Changed" />
+                                    <TextBlock x:Name="PreampValue" Grid.Column="2" Text="0.0 dB"
+                                               Style="{StaticResource Body}" Width="58" TextAlignment="Right"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <Border x:Name="VolumeCard" Grid.Column="1" Style="{StaticResource Card}"
+                                    Margin="7,0,0,0" Padding="14,11">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Volume" Style="{StaticResource Caption}"
+                                               VerticalAlignment="Center" Width="78" />
+                                    <Slider x:Name="VolumeSlider" Grid.Column="1" Style="{StaticResource ModernSlider}"
+                                            Minimum="0" Maximum="60" IsSnapToTickEnabled="True" TickFrequency="1"
+                                            ValueChanged="Volume_Changed" />
+                                    <TextBlock x:Name="VolumeValue" Grid.Column="2" Text="0"
+                                               Style="{StaticResource Body}" Width="58" TextAlignment="Right"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Library -->
+                    <Grid x:Name="PageLibrary" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton x:Name="TabCommunity" Style="{StaticResource PillTab}" Content="Handpick"
+                                         IsChecked="True" Checked="Tab_Checked" Tag="community" />
+                            <RadioButton x:Name="TabOfficial" Style="{StaticResource PillTab}" Content="Official"
+                                         Checked="Tab_Checked" Tag="official" />
+                            <RadioButton x:Name="TabPersonal" Style="{StaticResource PillTab}" Content="My presets"
+                                         Checked="Tab_Checked" Tag="personal" />
+                            <RadioButton x:Name="TabShare" Style="{StaticResource PillTab}" Content="Share code"
+                                         Checked="Tab_Checked" Tag="share" />
+                        </StackPanel>
+
+                        <Grid Grid.Row="1" Margin="0,0,0,10">
+                            <TextBox x:Name="SearchBox" Style="{StaticResource ModernTextBox}"
+                                     Margin="0,0,190,0" KeyDown="Search_KeyDown" />
+                            <TextBlock x:Name="SearchHint" Text="Search presets, or paste a share code"
+                                       Style="{StaticResource Caption}" Margin="12,0,0,0"
+                                       VerticalAlignment="Center" IsHitTestVisible="False" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Style="{StaticResource GhostButton}" Content="Search" Click="Search_Click" />
+                                <Button Style="{StaticResource GhostButton}" Content="Refresh" Margin="6,0,0,0"
+                                        Click="Refresh_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="330" />
+                            </Grid.ColumnDefinitions>
+
+                            <ListBox x:Name="PresetList" Style="{StaticResource PlainList}"
+                                     SelectionChanged="Preset_Selected" Margin="0,0,12,0" />
+
+                            <Border Grid.Column="1" Style="{StaticResource Card}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="DetailPanel">
+                                        <TextBlock x:Name="DetailEmpty" Style="{StaticResource Caption}"
+                                                   TextWrapping="Wrap"
+                                                   Text="Pick a preset to see its bands." />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="3" Margin="0,12,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="PrevButton" Style="{StaticResource GhostButton}" Content="Previous"
+                                        Click="Prev_Click" />
+                                <TextBlock x:Name="PageLabel" Style="{StaticResource Caption}" Margin="12,0"
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="NextButton" Style="{StaticResource GhostButton}" Content="Next"
+                                        Click="Next_Click" />
+                            </StackPanel>
+                            <Button x:Name="ApplyButton" Style="{StaticResource PrimaryButton}"
+                                    Content="Apply to device" HorizontalAlignment="Right"
+                                    IsEnabled="False" Click="ApplyPreset_Click" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- Device -->
+                    <ScrollViewer x:Name="PageDevice" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,0,16">
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Connection" Style="{StaticResource H2}" Margin="0,0,0,10" />
+                                    <Grid x:Name="DeviceInfoGrid" />
+                                    <Button Style="{StaticResource GhostButton}" Content="Reconnect"
+                                            HorizontalAlignment="Left" Margin="0,12,0,0" Click="Reconnect_Click" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="FilterCard" Style="{StaticResource Card}" Margin="0,0,0,12"
+                                    Visibility="Collapsed">
+                                <StackPanel>
+                                    <TextBlock Text="DAC filter" Style="{StaticResource H2}" Margin="0,0,0,10" />
+                                    <ComboBox x:Name="FilterBox" Style="{StaticResource ModernCombo}" Width="230"
+                                              HorizontalAlignment="Left" SelectionChanged="Filter_Changed" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Presets on this device" Style="{StaticResource H2}"
+                                               Margin="0,0,0,6" />
+                                    <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap"
+                                               Text="A backup writes every preset to a JSON file; restoring puts them back exactly as they were." />
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <Button Style="{StaticResource GhostButton}" Content="Back up all presets"
+                                                Click="BackupAll_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Restore from backup"
+                                                Margin="8,0,0,0" Click="RestoreAll_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- Status bar -->
+                <Border Grid.Row="2" Background="#0A0C0F" CornerRadius="0,0,10,0" Padding="22,9">
+                    <Grid>
+                        <TextBlock x:Name="StatusText" Style="{StaticResource Caption}" Text="" />
+                        <ProgressBar x:Name="Busy" Height="2" Width="90" HorizontalAlignment="Right"
+                                     IsIndeterminate="True" Visibility="Collapsed"
+                                     Foreground="{StaticResource Accent}" Background="Transparent"
+                                     BorderThickness="0" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
