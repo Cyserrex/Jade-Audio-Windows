@@ -1,0 +1,98 @@
+name: Release
+
+# Pushing a version tag builds the app and publishes the release.
+#
+#   git tag v2.1.0
+#   git push origin v2.1.0
+#
+# workflow_dispatch is there to re-run a release without moving the tag.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build, e.g. v2.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up the .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Work out the version
+        id: version
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          number="${tag#v}"
+          if [[ ! "$number" =~ ^[0-9]+(\.[0-9]+){1,3}$ ]]; then
+            echo "::error::Tag '$tag' is not a version like v2.1.0"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      # The app targets net48; the SDK-style project still builds it with the
+      # modern toolchain, and windows-latest carries the 4.8 targeting pack.
+      - name: Publish the executable
+        shell: bash
+        run: |
+          dotnet publish csharp/JadeAudioControl/JadeAudioControl.csproj \
+            --configuration Release \
+            --output dist \
+            -p:Version=${{ steps.version.outputs.number }}
+          # Nothing should ship beside the exe.
+          rm -f "dist/Jade Audio Control.exe.config"
+          ls -l dist
+
+      - name: Fail if anything but the exe was produced
+        shell: bash
+        run: |
+          unexpected="$(find dist -type f ! -name 'Jade Audio Control.exe')"
+          if [ -n "$unexpected" ]; then
+            echo "::error::The publish produced files beside the exe:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Record the checksum
+        shell: bash
+        run: |
+          cd dist
+          sha256sum "Jade Audio Control.exe" | tee SHA256SUMS.txt
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          NUMBER: ${{ steps.version.outputs.number }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # Re-running a release: replace the assets, leave the notes alone.
+            gh release upload "$TAG" \
+              "dist/Jade Audio Control.exe" "dist/SHA256SUMS.txt" --clobber
+          else
+            gh release create "$TAG" \
+              "dist/Jade Audio Control.exe" "dist/SHA256SUMS.txt" \
+              --title "Jade Audio Control $NUMBER" \
+              --notes-file .github/release-notes.md \
+              --latest
+          fi

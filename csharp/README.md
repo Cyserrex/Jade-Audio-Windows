@@ -72,6 +72,9 @@ dotnet publish -c Release -o ..\dist
 
 That writes the single `dist\Jade Audio Control.exe`.
 
+Releases are built by GitHub Actions rather than by hand - see
+[Releasing](../README.md#releasing).
+
 ## Layout
 
 | file | role |

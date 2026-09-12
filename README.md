@@ -72,6 +72,29 @@ python run.py
 Either way, close the FiiO Control browser tab first — two clients talking to
 the same HID interface will confuse each other.
 
+## Releasing
+
+Nothing is built by hand. Two workflows do it:
+
+| workflow | when | what it does |
+| --- | --- | --- |
+| `.github/workflows/build.yml` | every push to `main` and every pull request | builds the exe and keeps it as an artifact, and checks the Python modules import |
+| `.github/workflows/release.yml` | pushing a `v*` tag | builds the exe, stamps it with the tag's version, and publishes the release |
+
+So cutting a release is two commands:
+
+```bash
+git tag v2.1.0
+git push origin v2.1.0
+```
+
+The workflow stamps the assembly version from the tag, refuses to continue if
+the publish leaves anything beside the exe, records a SHA-256 of the binary as a
+release asset, and takes the release body from
+[`.github/release-notes.md`](.github/release-notes.md) — edit that file when the
+description should change. Re-running the workflow on an existing tag replaces
+the assets and leaves the notes alone.
+
 ## Command line
 
 The same device layer is available headless, which is handy for scripting or

@@ -1,0 +1,76 @@
+name: Build
+
+# Every push to main and every pull request builds the app, so a broken commit
+# is caught before anyone tags it. The exe is kept as an artifact for 90 days.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "csharp/docs/**"
+      - "screenshot.png"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-app:
+    name: WPF app (.NET Framework 4.8)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish the executable
+        shell: bash
+        run: |
+          dotnet publish csharp/JadeAudioControl/JadeAudioControl.csproj \
+            --configuration Release --output dist
+          rm -f "dist/Jade Audio Control.exe.config"
+          ls -l dist
+
+      - name: Fail if anything but the exe was produced
+        shell: bash
+        run: |
+          unexpected="$(find dist -type f ! -name 'Jade Audio Control.exe')"
+          if [ -n "$unexpected" ]; then
+            echo "::error::The publish produced files beside the exe:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jade-audio-control-${{ github.sha }}
+          path: dist/Jade Audio Control.exe
+          if-no-files-found: error
+
+  python-app:
+    name: Python edition
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the dependencies
+        run: pip install -r requirements.txt
+
+      # No device on the runner, so this only proves the modules import and the
+      # command line is wired up - which is what breaks in practice.
+      - name: Import every module
+        run: |
+          python -c "import jadeaudio.protocol, jadeaudio.device, jadeaudio.eq, jadeaudio.cloud, jadeaudio.capabilities, jadeaudio.cli; print('imports ok')"
+
+      - name: Check the command line responds
+        run: python -m jadeaudio.cli --help
