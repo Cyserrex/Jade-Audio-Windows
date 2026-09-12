@@ -1,0 +1,13 @@
+{
+  "device": "JadeAudio JA11",
+  "preset": "USER1",
+  "name": "Samson SR850 - Wide Stage",
+  "globalGain": -3.0,
+  "bands": [
+    { "index": 0, "frequency": 80,    "gain": 4.0,  "q": 0.70, "filterType": 1 },
+    { "index": 1, "frequency": 220,   "gain": -2.0, "q": 1.20, "filterType": 0 },
+    { "index": 2, "frequency": 3000,  "gain": -3.0, "q": 1.20, "filterType": 0 },
+    { "index": 3, "frequency": 9200,  "gain": -6.0, "q": 2.20, "filterType": 0 },
+    { "index": 4, "frequency": 11000, "gain": 3.5,  "q": 0.70, "filterType": 2 }
+  ]
+}

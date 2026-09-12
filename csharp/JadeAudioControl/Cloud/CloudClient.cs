@@ -25,6 +25,8 @@ public sealed class AuthException : CloudException
 /// <summary>One preset from the online library.</summary>
 public sealed class CloudPreset
 {
+    /// <summary>The library's own id. -1 for anything not saved to an account.</summary>
+    public long Id { get; init; } = -1;
     public string Name { get; init; } = "Untitled";
     public string Author { get; init; } = "";
     public string Description { get; init; } = "";
@@ -67,6 +69,7 @@ public sealed class CloudPreset
 
         return new CloudPreset
         {
+            Id = (long)node["id"].AsDouble(-1),
             Name = node["styleName"].AsString ?? node["name"].AsString ?? "Untitled",
             Author = node["peqUserName"].AsString ?? node["userName"].AsString ?? "",
             Description = node["description"].AsString ?? "",
@@ -170,9 +173,14 @@ public sealed class CloudClient
     // Account state. Tokens live here in memory only - nothing reaches disk.
     private string? _appToken;
     public string? AccessToken { get; private set; }
+    public string? RefreshToken { get; private set; }
+    public DateTime TokenExpiresAtUtc { get; private set; }
     public string? UserId { get; private set; }
     public string UserName { get; private set; } = "";
     public bool LoggedIn => AccessToken is not null && UserId is not null;
+
+    /// <summary>Whether the session should be written to disk on sign-in.</summary>
+    public bool RememberMe { get; set; }
 
     public CloudClient()
     {
@@ -356,6 +364,119 @@ public sealed class CloudClient
         return new PresetPage(list, list.Count);
     }
 
+    // -- writing to the account ----------------------------------------------
+
+    private static List<Dictionary<string, object>> BandsToJson(IReadOnlyList<Band> bands)
+    {
+        var list = new List<Dictionary<string, object>>(bands.Count);
+        for (int i = 0; i < bands.Count; i++)
+            list.Add(new Dictionary<string, object>
+            {
+                ["position"] = i,
+                ["frequency"] = bands[i].Frequency,
+                ["gain"] = Math.Round(bands[i].Gain, 1),
+                ["qValue"] = Math.Round(bands[i].Q, 2),
+                ["filterType"] = (int)bands[i].Type,
+            });
+        return list;
+    }
+
+    private Dictionary<string, object> PresetRecord(
+        long id, string name, string description, int deviceType,
+        double globalGain, IReadOnlyList<Band> bands, bool share) =>
+        new()
+        {
+            ["id"] = id,
+            ["styleName"] = name,
+            ["description"] = description,
+            ["userId"] = UserId!,
+            ["customOrNot"] = true,
+            ["shareOrNot"] = share,
+            ["deviceType"] = deviceType,
+            ["masterGain"] = Math.Round(globalGain, 1),
+            ["eqParamsJson"] = BandsToJson(bands),
+        };
+
+    /// <summary>
+    /// Did the server accept the write? A batch reply reports per item, and a
+    /// failure there still arrives under code 200.
+    /// </summary>
+    private static void EnsureAccepted(Json data, string what)
+    {
+        foreach (var item in data.Items)
+        {
+            if (item["successOrNot"].AsString == "true" || item["successOrNot"].AsString == "True")
+                return;
+            throw new CloudException(item["message"].AsString ?? $"The server refused to {what}.");
+        }
+    }
+
+    /// <summary>
+    /// Save the current bands to the signed-in account as a new preset.
+    /// <paramref name="share"/> publishes it to the community list, so it is off
+    /// unless the caller asks for it.
+    /// </summary>
+    public async Task SavePresetAsync(
+        string name, string description, int deviceType,
+        double globalGain, IReadOnlyList<Band> bands, bool share = false)
+    {
+        if (!LoggedIn)
+            throw new AuthException("Sign in before saving a preset to your account.");
+        if (string.IsNullOrWhiteSpace(name))
+            throw new CloudException("Give the preset a name.");
+
+        var payload = new Dictionary<string, object>
+        {
+            ["userId"] = UserId!,
+            ["peqList"] = new[]
+            {
+                PresetRecord(-1, name.Trim(), description.Trim(), deviceType, globalGain, bands, share),
+            },
+        };
+        EnsureAccepted(await PostEnvelopeAsync("/add-peq", payload).ConfigureAwait(false), "save the preset");
+    }
+
+    /// <summary>Overwrite a preset already on the account.</summary>
+    public async Task UpdatePresetAsync(
+        long id, string name, string description, int deviceType,
+        double globalGain, IReadOnlyList<Band> bands, bool share = false)
+    {
+        if (!LoggedIn)
+            throw new AuthException("Sign in before changing a preset on your account.");
+        if (id < 0)
+            throw new CloudException("That preset has no id to update.");
+
+        var payload = new Dictionary<string, object>
+        {
+            ["userId"] = UserId!,
+            ["peqList"] = new[]
+            {
+                PresetRecord(id, name.Trim(), description.Trim(), deviceType, globalGain, bands, share),
+            },
+        };
+        EnsureAccepted(await PostEnvelopeAsync("/update-peq", payload).ConfigureAwait(false), "update the preset");
+    }
+
+    /// <summary>Remove a preset from the account. There is no undo.</summary>
+    public async Task DeletePresetAsync(CloudPreset preset)
+    {
+        if (!LoggedIn)
+            throw new AuthException("Sign in before deleting a preset from your account.");
+        if (preset.Id < 0)
+            throw new CloudException("That preset is not one of yours.");
+
+        var payload = new Dictionary<string, object>
+        {
+            ["userId"] = UserId!,
+            ["peqList"] = new[]
+            {
+                PresetRecord(preset.Id, preset.Name, preset.Description,
+                             preset.DeviceType, preset.GlobalGain, preset.Bands, false),
+            },
+        };
+        EnsureAccepted(await PostEnvelopeAsync("/delete-peq", payload).ConfigureAwait(false), "delete the preset");
+    }
+
     // -- account -------------------------------------------------------------
 
     private async Task<Json> PostFormAsync(string path, Dictionary<string, string> form, string? bearer)
@@ -467,7 +588,118 @@ public sealed class CloudClient
 
         AccessToken = payload["access_token"].AsString
                       ?? throw new AuthException(payload["msg"].AsString ?? "Sign in failed.");
+        RefreshToken = payload["refresh_token"].AsString ?? "";
+        TokenExpiresAtUtc = DateTime.UtcNow.AddSeconds(payload["expires_in"].AsDouble(2592000));
         await FetchUserInfoAsync().ConfigureAwait(false);
+        PersistSession();
+    }
+
+    private void PersistSession()
+    {
+        if (!RememberMe || !LoggedIn)
+            return;
+
+        SessionStore.Save(new StoredSession
+        {
+            AccessToken = AccessToken!,
+            RefreshToken = RefreshToken ?? "",
+            ExpiresAtUtc = TokenExpiresAtUtc,
+            UserId = UserId!,
+            UserName = UserName,
+        });
+    }
+
+    /// <summary>
+    /// Bring back a "stay signed in" session, if one was stored and still works.
+    ///
+    /// The stored token is trusted only as far as the server agrees: the profile
+    /// is re-read, and a token past its expiry is refreshed first. Anything that
+    /// does not work is discarded rather than left to fail later.
+    /// </summary>
+    public async Task<bool> TryRestoreSessionAsync()
+    {
+        var stored = SessionStore.Load();
+        if (stored is null)
+            return false;
+
+        AccessToken = stored.AccessToken;
+        RefreshToken = stored.RefreshToken;
+        TokenExpiresAtUtc = stored.ExpiresAtUtc;
+        UserId = stored.UserId;
+        UserName = stored.UserName;
+        RememberMe = true;
+
+        if (stored.IsExpired && !await TryRefreshAsync().ConfigureAwait(false))
+        {
+            ForgetSession();
+            return false;
+        }
+
+        try
+        {
+            await FetchUserInfoAsync().ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // The token was rejected. One refresh attempt, then give up quietly.
+            if (!await TryRefreshAsync().ConfigureAwait(false))
+            {
+                ForgetSession();
+                return false;
+            }
+            try
+            {
+                await FetchUserInfoAsync().ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                ForgetSession();
+                return false;
+            }
+        }
+
+        PersistSession();
+        return true;
+    }
+
+    /// <summary>Exchange the refresh token for a new access token.</summary>
+    private async Task<bool> TryRefreshAsync()
+    {
+        if (string.IsNullOrEmpty(RefreshToken))
+            return false;
+
+        try
+        {
+            var payload = await PostFormAsync("/oauth/token", new Dictionary<string, string>
+            {
+                ["client_id"] = ClientId,
+                ["client_secret"] = ClientSecret,
+                ["grant_type"] = "refresh_token",
+                ["refresh_token"] = RefreshToken!,
+            }, await AppTokenAsync().ConfigureAwait(false)).ConfigureAwait(false);
+
+            string? token = payload["access_token"].AsString;
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            AccessToken = token;
+            RefreshToken = payload["refresh_token"].AsString ?? RefreshToken;
+            TokenExpiresAtUtc = DateTime.UtcNow.AddSeconds(payload["expires_in"].AsDouble(2592000));
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private void ForgetSession()
+    {
+        AccessToken = null;
+        RefreshToken = null;
+        UserId = null;
+        UserName = "";
+        SessionStore.Clear();
     }
 
     private async Task FetchUserInfoAsync()
@@ -511,8 +743,7 @@ public sealed class CloudClient
 
     public void Logout()
     {
-        AccessToken = null;
-        UserId = null;
-        UserName = "";
+        RememberMe = false;
+        ForgetSession();
     }
 }

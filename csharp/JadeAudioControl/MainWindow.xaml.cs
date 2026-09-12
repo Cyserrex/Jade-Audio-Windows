@@ -44,7 +44,11 @@ public partial class MainWindow : Window
         // bar behind the taskbar.
         Width = Math.Min(Width, SystemParameters.WorkArea.Width - 40);
         Height = Math.Min(Height, SystemParameters.WorkArea.Height - 40);
-        Loaded += async (_, _) => await ConnectAsync();
+        Loaded += async (_, _) =>
+        {
+            await ConnectAsync();
+            await RestoreSessionAsync();
+        };
         Curve.BandDragged += Curve_BandDragged;
         Curve.BandSelected += (_, index) => HighlightBand(index);
         SearchBox.TextChanged += (_, _) =>
@@ -590,6 +594,8 @@ public partial class MainWindow : Window
 
         _tab = (string)((RadioButton)sender).Tag;
         _page = 1;
+        DeleteButton.Visibility = _tab == "personal" ? Visibility.Visible : Visibility.Collapsed;
+        DeleteButton.IsEnabled = false;
         SearchHint.Text = _tab == "share"
             ? "Paste a share code, e.g. FiiOSC-a1b2c3..."
             : "Search presets by name or description";
@@ -743,6 +749,8 @@ public partial class MainWindow : Window
         int index = PresetList.SelectedIndex;
         _selectedPreset = index >= 0 && index < _libraryPresets.Count ? _libraryPresets[index] : null;
         ApplyButton.IsEnabled = _selectedPreset is not null && _device is not null;
+        DeleteButton.Visibility = _tab == "personal" ? Visibility.Visible : Visibility.Collapsed;
+        DeleteButton.IsEnabled = _tab == "personal" && _selectedPreset is { Id: >= 0 };
         ShowDetail(_selectedPreset);
     }
 
@@ -899,26 +907,100 @@ public partial class MainWindow : Window
         NavEq.IsChecked = true;
     }
 
+    private void SaveOnline_Click(object sender, RoutedEventArgs e)
+    {
+        if (_device is null || _bands.Count == 0)
+            return;
+
+        if (!_cloud.LoggedIn)
+        {
+            Status("Sign in first - the preset is saved to your FiiO account.");
+            var login = new LoginWindow(_cloud) { Owner = this };
+            if (login.ShowDialog() != true)
+                return;
+            ShowSignedIn();
+        }
+
+        double gain = _caps.Has(Reg.GlobalGain) ? Math.Round(PreampSlider.Value, 1) : 0;
+        var dialog = new SavePresetWindow(_cloud, _device.ProductName, DeviceType, _bands, gain)
+        {
+            Owner = this,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        Status("Saved to your account.");
+        if (_tab == "personal")
+            _ = LoadLibraryAsync();
+    }
+
+    private async void DeletePreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedPreset is not { } preset || preset.Id < 0)
+            return;
+
+        if (MessageBox.Show(
+                $"Delete '{preset.Name}' from your FiiO account?\n\nThere is no undo.",
+                "Jade Audio Control", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        using var _ = BusyScope();
+        try
+        {
+            await _cloud.DeletePresetAsync(preset);
+            Status($"Deleted '{preset.Name}'.");
+            await LoadLibraryAsync();
+        }
+        catch (Exception exc)
+        {
+            Status(exc.Message);
+        }
+    }
+
     // -- account -------------------------------------------------------------
+
+    /// <summary>Pick up a "stay signed in" session, quietly if there is none.</summary>
+    private async Task RestoreSessionAsync()
+    {
+        try
+        {
+            if (await _cloud.TryRestoreSessionAsync())
+                ShowSignedIn();
+        }
+        catch (Exception)
+        {
+            // Never block startup on the account server.
+        }
+    }
+
+    private void ShowSignedIn()
+    {
+        AccountLine.Text = $"Signed in as {(_cloud.UserName.Length > 0 ? _cloud.UserName : "you")}";
+        AccountButton.Content = "Sign out";
+    }
+
+    private void ShowSignedOut()
+    {
+        AccountLine.Text = "Not signed in";
+        AccountButton.Content = "Sign in";
+    }
 
     private void Account_Click(object sender, RoutedEventArgs e)
     {
         if (_cloud.LoggedIn)
         {
             _cloud.Logout();
-            AccountLine.Text = "Not signed in";
-            AccountButton.Content = "Sign in";
+            ShowSignedOut();
             if (_tab == "personal")
                 _ = LoadLibraryAsync();
-            Status("Signed out.");
+            Status("Signed out. The stored session was erased.");
             return;
         }
 
         var login = new LoginWindow(_cloud) { Owner = this };
         if (login.ShowDialog() == true)
         {
-            AccountLine.Text = $"Signed in as {(_cloud.UserName.Length > 0 ? _cloud.UserName : "you")}";
-            AccountButton.Content = "Sign out";
+            ShowSignedIn();
             Status("Signed in.");
             NavLibrary.IsChecked = true;
             TabPersonal.IsChecked = true;

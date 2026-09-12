@@ -1,0 +1,13 @@
+{
+  "device": "JadeAudio JA11",
+  "preset": "USER1",
+  "name": "Samson SR850 - Balanced & Open",
+  "globalGain": -3.0,
+  "bands": [
+    { "index": 0, "frequency": 100,   "gain": 5.5,  "q": 0.70, "filterType": 1 },
+    { "index": 1, "frequency": 300,   "gain": 1.5,  "q": 1.00, "filterType": 0 },
+    { "index": 2, "frequency": 4200,  "gain": -4.0, "q": 1.60, "filterType": 0 },
+    { "index": 3, "frequency": 9200,  "gain": -6.5, "q": 2.20, "filterType": 0 },
+    { "index": 4, "frequency": 13000, "gain": 2.5,  "q": 0.70, "filterType": 2 }
+  ]
+}

@@ -59,7 +59,10 @@
                 <TextBlock Text="Click the image for a different one." Style="{StaticResource Caption}"
                            Margin="0,6,0,0" />
 
-                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                <CheckBox x:Name="RememberBox" Style="{StaticResource ModernCheck}"
+                          Content="Stay signed in on this computer" IsChecked="True" Margin="0,16,0,0" />
+
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                     <CheckBox x:Name="AgreeBox" Style="{StaticResource ModernCheck}" Content="I agree to FiiO's" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">
                         <Hyperlink Foreground="{StaticResource Accent}" TextDecorations="Underline"
@@ -88,7 +91,7 @@
                 <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Stroke}"
                         BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,18,0,0">
                     <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap"
-                               Text="Your password goes straight to FiiO and is kept nowhere else — not on disk, not in a log. The session token lives in memory only, so you sign in again after a restart." />
+                               Text="Your password goes straight to FiiO and is kept nowhere else — not on disk, not in a log. Staying signed in stores only the session token, encrypted for this Windows account; signing out erases it." />
                 </Border>
             </StackPanel>
         </Grid>

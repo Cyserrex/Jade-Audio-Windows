@@ -33,6 +33,7 @@
     <!-- All in-box with .NET Framework, so the build stays a single exe:
          no NuGet payload, no DLLs beside the executable. -->
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>

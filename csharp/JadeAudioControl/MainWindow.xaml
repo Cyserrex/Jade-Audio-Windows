@@ -119,6 +119,8 @@
                                         Margin="6,0,0,0" Click="Export_Click" />
                                 <Button Style="{StaticResource GhostButton}" Content="Import"
                                         Margin="6,0,0,0" Click="Import_Click" />
+                                <Button x:Name="SaveOnlineButton" Style="{StaticResource GhostButton}"
+                                        Content="Save online" Margin="6,0,0,0" Click="SaveOnline_Click" />
                             </StackPanel>
                             <TextBlock Text="Edits apply and persist immediately" Style="{StaticResource Caption}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" />
@@ -250,9 +252,14 @@
                                 <Button x:Name="NextButton" Style="{StaticResource GhostButton}" Content="Next"
                                         Click="Next_Click" />
                             </StackPanel>
-                            <Button x:Name="ApplyButton" Style="{StaticResource PrimaryButton}"
-                                    Content="Apply to device" HorizontalAlignment="Right"
-                                    IsEnabled="False" Click="ApplyPreset_Click" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button x:Name="DeleteButton" Style="{StaticResource GhostButton}"
+                                        Content="Delete from account" Visibility="Collapsed"
+                                        IsEnabled="False" Click="DeletePreset_Click" Margin="0,0,8,0" />
+                                <Button x:Name="ApplyButton" Style="{StaticResource PrimaryButton}"
+                                        Content="Apply to device"
+                                        IsEnabled="False" Click="ApplyPreset_Click" />
+                            </StackPanel>
                         </Grid>
                     </Grid>
 

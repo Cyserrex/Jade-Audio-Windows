@@ -110,6 +110,7 @@ public partial class LoginWindow : Window
         SignInButton.Content = "Signing in...";
         try
         {
+            _cloud.RememberMe = RememberBox.IsChecked == true;
             await _cloud.LoginAsync(username, password, captcha, _captchaToken);
             DialogResult = true;
             Close();
