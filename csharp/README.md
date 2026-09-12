@@ -11,8 +11,9 @@ firmware 2.20).
 
 ## Running
 
-`dist\Jade Audio Control.exe` is a single 187 KB file. Copy it anywhere and
-double-click — there is nothing beside it, not even a `.config`.
+`dist\Jade Audio Control.exe`, at the top of the repository, is a single 188 KB
+file. Copy it anywhere and double-click — there is nothing beside it, not even a
+`.config`.
 
 .NET Framework 4.8 ships with Windows 10 1903 and later and with Windows 11, so
 on any current machine it simply runs. On Windows 7 SP1 or 8.1 it needs the 4.8
@@ -20,7 +21,7 @@ runtime installed once, from <https://dotnet.microsoft.com/download/dotnet-frame
 
 Targeting 4.8 rather than .NET 8 is what makes that reach possible: .NET 8 does
 not support Windows 7 at all, and a self-contained .NET 8 build of this app came
-to 69 MB against 187 KB here.
+to 69 MB against 188 KB here.
 
 ## What is in it
 
@@ -66,11 +67,12 @@ toolchain: `winget install Microsoft.DotNet.SDK.8`, or the zip from
 <https://dotnet.microsoft.com/download/dotnet/8.0> extracted anywhere.
 
 ```bash
-cd JadeAudioControl
-dotnet publish -c Release -o ..\dist
+dotnet publish csharp/JadeAudioControl -c Release -o dist
 ```
 
-That writes the single `dist\Jade Audio Control.exe`.
+Run that from the top of the repository; it writes the single
+`dist\Jade Audio Control.exe`. The Python edition builds to `dist-python/`, so
+the two never share a folder.
 
 Releases are built by GitHub Actions rather than by hand - see
 [Releasing](../README.md#releasing).

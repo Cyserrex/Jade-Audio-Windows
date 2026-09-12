@@ -72,6 +72,15 @@ python run.py
 Either way, close the FiiO Control browser tab first — two clients talking to
 the same HID interface will confuse each other.
 
+## Where builds land
+
+| folder | what | built by |
+| --- | --- | --- |
+| `dist/` | the C# app — one `Jade Audio Control.exe`, ~188 KB | `dotnet publish csharp/JadeAudioControl -c Release -o dist` |
+| `dist-python/` | the Python app — one `Jade Audio Control.exe`, ~24 MB | `python build.py` |
+
+Neither folder is committed; the released binary comes from CI.
+
 ## Releasing
 
 Nothing is built by hand. Two workflows do it:

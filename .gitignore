@@ -1,6 +1,6 @@
 # Build output
 dist/
-csharp/dist/
+dist-python/
 csharp/**/bin/
 csharp/**/obj/
 build/

@@ -2,8 +2,10 @@
 
     python build.py
 
-Produces dist/Jade Audio Control.exe - a single file with Python, Tk and
+Produces dist-python/Jade Audio Control.exe - a single file with Python, Tk and
 hidapi inside, so it runs on a machine with no Python installed.
+
+The C# app publishes to dist/ instead; see csharp/README.md.
 """
 
 from __future__ import annotations
@@ -39,6 +41,8 @@ def main() -> int:
         "--clean",
         "--onefile",
         "--windowed",
+        "--distpath",
+        "dist-python",
         "--name",
         NAME,
         "--icon",
@@ -64,7 +68,7 @@ def main() -> int:
     if result.returncode != 0:
         return result.returncode
 
-    exe = ROOT / "dist" / f"{NAME}.exe"
+    exe = ROOT / "dist-python" / f"{NAME}.exe"
     print(f"\nBuilt {exe}  ({exe.stat().st_size / 1_048_576:.1f} MB)")
     return 0
 
