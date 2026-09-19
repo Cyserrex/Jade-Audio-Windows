@@ -170,6 +170,9 @@ public sealed class CloudClient
 
     private readonly HttpClient _http;
 
+    /// <summary>Shared so other lookups do not each open their own connection pool.</summary>
+    public HttpClient Http => _http;
+
     // Account state. Tokens live here in memory only - nothing reaches disk.
     private string? _appToken;
     public string? AccessToken { get; private set; }

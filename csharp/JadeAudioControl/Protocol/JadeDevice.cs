@@ -139,6 +139,13 @@ public sealed class JadeDevice : IDisposable
         return BitConverter.ToString(payload).Replace("-", string.Empty);
     }
 
+    /// <summary>The raw version bytes, for comparing against a published list.</summary>
+    public async Task<(int Major, int Minor)> GetFirmwareVersionAsync()
+    {
+        var payload = (await RequestAsync(Frames.Read(Reg.FirmwareVersion))).Payload;
+        return payload.Length >= 2 ? (payload[0], payload[1]) : (-1, -1);
+    }
+
     public async Task<byte> GetPresetAsync() =>
         (await RequestAsync(Frames.Read(Reg.PeqPre))).Payload[0];
 

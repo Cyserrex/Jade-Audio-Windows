@@ -36,6 +36,8 @@ public partial class MainWindow : Window
     private const int PageSize = 20;
     private List<CloudPreset> _libraryPresets = new();
     private CloudPreset? _selectedPreset;
+    private (int Major, int Minor) _firmware = (-1, -1);
+    private FirmwareCheck? _firmwareCheck;
 
     public MainWindow()
     {
@@ -126,6 +128,9 @@ public partial class MainWindow : Window
             var device = await Task.Run(JadeDevice.Open);
             var caps = await device.ProbeAsync();
             string firmware = caps.Has(Reg.FirmwareVersion) ? await device.GetFirmwareAsync() : "?";
+            _firmware = caps.Has(Reg.FirmwareVersion)
+                ? await device.GetFirmwareVersionAsync()
+                : (-1, -1);
             byte preset = caps.Has(Reg.PeqPre) ? await device.GetPresetAsync() : (byte)0;
             var bands = caps.BandCount > 0 ? await device.ReadAllBandsAsync(caps.BandCount) : new List<Band>();
             double gain = caps.Has(Reg.GlobalGain) ? await device.GetGlobalGainAsync() : 0;
@@ -177,6 +182,14 @@ public partial class MainWindow : Window
             Curve.GainRange = caps.GainRange;
             BuildBandRows();
             BuildDeviceInfo(firmware);
+
+            _firmwareCheck = null;
+            FirmwareLine.Text = _firmware.Major >= 0
+                ? $"Installed: {FirmwareCatalogue.Describe(_firmware.Major, _firmware.Minor)}"
+                : "This device does not report a firmware version.";
+            FirmwareCheckButton.IsEnabled = _firmware.Major >= 0;
+            FirmwarePageButton.Visibility = Visibility.Collapsed;
+            FirmwareHowToButton.Visibility = Visibility.Collapsed;
 
             Status($"Connected. Registers: {string.Join(", ", caps.Supported.Select(r => r.ToString()))}");
         }
@@ -244,6 +257,77 @@ public partial class MainWindow : Window
     }
 
     private async void Reconnect_Click(object sender, RoutedEventArgs e) => await ConnectAsync();
+
+    // -- firmware ------------------------------------------------------------
+
+    private async void CheckFirmware_Click(object sender, RoutedEventArgs e)
+    {
+        if (_device is null || _firmware.Major < 0)
+            return;
+
+        using var _ = BusyScope();
+        FirmwareCheckButton.IsEnabled = false;
+        FirmwareLine.Text = "Checking...";
+        try
+        {
+            var check = await FirmwareCatalogue.CheckAsync(
+                _cloud.Http, _device.ProductName, _firmware.Major, _firmware.Minor);
+            _firmwareCheck = check;
+
+            string installed = FirmwareCatalogue.Describe(_firmware.Major, _firmware.Minor);
+            FirmwareLine.Text = check.State switch
+            {
+                FirmwareState.UpToDate => check.Message,
+                FirmwareState.UpdateAvailable => check.Message,
+                FirmwareState.Ahead => check.Message,
+                _ => $"Installed: {installed}. {check.Message}",
+            };
+
+            FirmwarePageButton.Visibility = Visibility.Visible;
+            FirmwareHowToButton.Visibility =
+                string.IsNullOrEmpty(check.Info?.InstructionsUrl) ? Visibility.Collapsed : Visibility.Visible;
+
+            if (!string.IsNullOrEmpty(check.Info?.Notes))
+                FirmwareNote.Text = check.Info!.Notes +
+                    " Nothing here writes to the dongle.";
+
+            Status(check.State == FirmwareState.UpdateAvailable
+                ? "A newer firmware is published."
+                : "");
+        }
+        catch (Exception exc)
+        {
+            FirmwareLine.Text = exc.Message;
+        }
+        finally
+        {
+            FirmwareCheckButton.IsEnabled = true;
+        }
+    }
+
+    private void FirmwarePage_Click(object sender, RoutedEventArgs e) =>
+        OpenUrl(_firmwareCheck?.BestUrl ?? "https://www.fiio.com/supports");
+
+    private void FirmwareHowTo_Click(object sender, RoutedEventArgs e)
+    {
+        string url = _firmwareCheck?.Info?.InstructionsUrl ?? "";
+        if (url.Length > 0)
+            OpenUrl(url);
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception)
+        {
+        }
+    }
 
     // -- equaliser -----------------------------------------------------------
 
@@ -962,10 +1046,13 @@ public partial class MainWindow : Window
     /// <summary>Pick up a "stay signed in" session, quietly if there is none.</summary>
     private async Task RestoreSessionAsync()
     {
+        bool hadStoredSession = SessionStore.Exists;
         try
         {
             if (await _cloud.TryRestoreSessionAsync())
                 ShowSignedIn();
+            else if (hadStoredSession)
+                Status("The saved sign-in is no longer accepted - sign in again.");
         }
         catch (Exception)
         {

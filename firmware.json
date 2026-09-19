@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "updated": "2026-09-20",
+  "comment": "The app reads this file from the main branch at runtime, so adding a new firmware release is a commit here - no new build of the app. FiiO publishes no version API for USB dongles, which is why this list exists at all. 'major' and 'minor' are the two bytes the device reports for register 11; 'latest' is how FiiO writes the version in their announcement.",
+  "fallbackUrl": "https://www.fiio.com/supports",
+  "devices": [
+    {
+      "product": "JadeAudio JA11",
+      "deviceType": 109,
+      "latest": "2.2",
+      "major": 2,
+      "minor": 20,
+      "url": "https://www.fiio.com/newsinfo/1065234.html",
+      "instructionsUrl": "https://fiiosupport.freshdesk.com/support/solutions/articles/69000870879-how-to-upgrade-the-firmware-for-the-ja11-",
+      "notes": "Updated with FiiO's own JA11 Upgrade Tool, not from this app."
+    }
+  ]
+}
