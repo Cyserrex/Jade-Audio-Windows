@@ -36,8 +36,8 @@ can be saved to your own account, and deleted from it again.
 
 ![Preset library](docs/library.png)
 
-**Device** — what the dongle reports about itself, plus backup and restore of
-every preset to a JSON file.
+**Device** — what the dongle reports about itself, a firmware check, and backup
+and restore of every preset to a JSON file.
 
 ![Device](docs/device.png)
 
@@ -131,6 +131,22 @@ puts the preset and your FiiO display name in front of everyone browsing
 Handpick. Deleting asks too — the server offers no undo.
 
 ![Sign in](docs/login.png)
+
+## Firmware
+
+The Device page reads the installed version from register 11 and compares it
+with a list, then offers FiiO's download page and their upgrade instructions.
+
+The list is [`firmware.json`](../firmware.json) in this repository, read from the
+main branch at runtime — so recording a new release is a commit, not a new build
+of the app. It exists because FiiO publishes no version API for USB dongles:
+their web bundle carries only the Qualcomm OTA flow, which serves the Bluetooth
+models.
+
+**The app does not flash firmware, and will not.** Writing an image over HID is
+how a dongle gets bricked, FiiO ship their own JA11 Upgrade Tool for it, and a
+half-written image on someone's hardware is not a bug that can be apologised
+away. Checking is safe; updating belongs in the vendor's tool.
 
 ## Notes carried over from the protocol work
 

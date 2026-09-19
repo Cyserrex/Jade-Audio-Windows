@@ -27,17 +27,11 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="18,20,0,18">
-                        <Border Width="32" Height="32" CornerRadius="9" Background="{StaticResource AccentGradient}">
-                            <TextBlock Text="JA" Foreground="#07110F" FontFamily="{StaticResource DisplayFont}"
-                                       FontWeight="Bold" FontSize="12.5"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Jade Audio" Style="{StaticResource H2}" />
-                            <TextBlock Text="by Cyserrex" Style="{StaticResource Caption}" Margin="0,-1,0,0" />
-                        </StackPanel>
-                    </StackPanel>
+                    <!-- The artwork already carries the wordmark and the byline,
+                         so the sidebar does not repeat them in text. -->
+                    <Image Grid.Row="0" Source="logo.png" Width="150"
+                           Margin="0,16,0,14" HorizontalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
 
                     <!-- Device chip -->
                     <Border Grid.Row="1" Margin="12,0,12,14" Background="{StaticResource Surface}"

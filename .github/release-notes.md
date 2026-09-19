@@ -30,8 +30,10 @@ other.
   it goes anywhere near the device. Browsing and applying need no account.
 - **Save your own presets** to your FiiO account, and delete them again.
   Publishing one to the community list is a separate, opt-in tick.
-- **Device** — what the dongle reports about itself, and backup/restore of every
-  preset to a JSON file.
+- **Device** — what the dongle reports about itself, a firmware check, and
+  backup/restore of every preset to a JSON file. The check compares the
+  installed version against a published list and points at FiiO's download page;
+  it does not flash anything — that belongs in FiiO's own upgrade tool.
 - Only the controls the attached device actually answers are shown, so other
   FiiO dongles get a sensible subset instead of dead knobs.
 
@@ -41,7 +43,7 @@ Optional, and only needed for the presets saved on your own FiiO account. You
 type your username, password and the CAPTCHA yourself; the password is forwarded
 to FiiO's token endpoint and kept nowhere else — not on disk, not in a log.
 
-**Stay signed in** keeps only the tokens, in
+**Stay signed in** means signing in once. It keeps only the tokens, in
 `%LOCALAPPDATA%\JadeAudioControl\session.dat`, encrypted with DPAPI for your
 Windows account — so the file is meaningless on another account or machine.
 Signing out erases it.

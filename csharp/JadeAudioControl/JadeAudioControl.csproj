@@ -24,6 +24,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Compiled into the exe, so the single-file promise still holds. -->
+    <Resource Include="logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Build-time only: the 4.8 reference assemblies, since no targeting pack
          is installed. PrivateAssets keeps it out of the output. -->
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
