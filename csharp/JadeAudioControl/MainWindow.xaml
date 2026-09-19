@@ -115,6 +115,9 @@
                                         Margin="6,0,0,0" Click="Import_Click" />
                                 <Button x:Name="SaveOnlineButton" Style="{StaticResource GhostButton}"
                                         Content="Save online" Margin="6,0,0,0" Click="SaveOnline_Click" />
+                                <ToggleButton x:Name="SpectrumToggle" Style="{StaticResource PillToggle}"
+                                              Content="Live spectrum" Margin="10,0,0,0"
+                                              Checked="Spectrum_Toggled" Unchecked="Spectrum_Toggled" />
                             </StackPanel>
                             <TextBlock Text="Edits apply and persist immediately" Style="{StaticResource Caption}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" />

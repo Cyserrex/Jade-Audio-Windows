@@ -30,6 +30,10 @@ other.
   it goes anywhere near the device. Browsing and applying need no account.
 - **Save your own presets** to your FiiO account, and delete them again.
   Publishing one to the community list is a separate, opt-in tick.
+- **Live spectrum** — an optional overlay of what the dongle is actually
+  playing, drawn behind the EQ curve on the same axis, so you can see what a
+  band does to real music while you drag it. It listens through WASAPI
+  loopback; nothing is recorded.
 - **Device** — what the dongle reports about itself, a firmware check, and
   backup/restore of every preset to a JSON file. The check compares the
   installed version against a published list and points at FiiO's download page;

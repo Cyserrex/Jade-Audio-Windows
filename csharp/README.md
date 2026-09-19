@@ -36,6 +36,12 @@ can be saved to your own account, and deleted from it again.
 
 ![Preset library](docs/library.png)
 
+**Live spectrum** — an optional overlay showing what the dongle is playing,
+behind the EQ curve and on the same log axis, so a peak in the music lines up
+with the band that would move it.
+
+![Live spectrum](docs/spectrum.png)
+
 **Device** — what the dongle reports about itself, a firmware check, and backup
 and restore of every preset to a JSON file.
 
@@ -52,6 +58,7 @@ No NuGet package reaches the output, which is what keeps it one file:
 | HTTP | `HttpClient` (`System.Net.Http`, in-box since 4.5) |
 | JSON | `JavaScriptSerializer` wrapped by `Compat/Json.cs` |
 | CAPTCHA image | WPF's own `BitmapImage`, which reads JPEG natively |
+| Audio capture | WASAPI through hand-declared COM interfaces (`Audio/`) |
 
 The only package reference is `Microsoft.NETFramework.ReferenceAssemblies`, and
 it is build-time only (`PrivateAssets="all"`) because no 4.8 targeting pack is
@@ -88,7 +95,10 @@ Releases are built by GitHub Actions rather than by hand - see
 | `Protocol/Frames.cs` | frame encode/decode, registers, value codecs |
 | `Protocol/JadeDevice.cs` | serialised request/reply, typed accessors, capability probe |
 | `Cloud/CloudClient.cs` | the encrypted preset API and the account session |
-| `Controls/EqCurve.cs` | the response plot and its drag handling |
+| `Controls/EqCurve.cs` | the response plot, the spectrum overlay and drag handling |
+| `Audio/WasapiInterop.cs` | the WASAPI COM surface, declared by hand |
+| `Audio/LoopbackCapture.cs` | shared-mode loopback on the playback endpoint |
+| `Audio/SpectrumAnalyser.cs` | Hann window, radix-2 FFT, log-axis bands |
 | `Controls/BandRow.cs` | one editable band |
 | `Compat/Json.cs` | a small JSON reader/writer, since 4.8 has no System.Text.Json |
 | `Compat/Pem.cs` | RSA public key from PEM, since 4.8 has no ImportFromPem |
@@ -131,6 +141,27 @@ puts the preset and your FiiO display name in front of everyone browsing
 Handpick. Deleting asks too — the server offers no undo.
 
 ![Sign in](docs/login.png)
+
+## Live spectrum
+
+Turning it on opens a shared-mode WASAPI **loopback** capture of the playback
+endpoint - preferring the one whose name mentions the dongle, which on this
+machine is "Headphones (JadeAudio JA11)", and otherwise the Windows default.
+Samples land in a ring buffer that is continuously overwritten; nothing is
+recorded, and nothing reaches disk.
+
+A Hann window and a 8192-point FFT give 5.9 Hz bins, which matters because the
+bars are only a few Hz apart down in the bass. The mean is subtracted first: a
+captured stream carries a small DC offset, and windowed, that smears across the
+lowest bins and plants a permanent bar there that drowns the real content.
+
+Verified against tones played through the dongle: 500 Hz reads 492, 2 kHz reads
+1929, 8 kHz reads 8136 — inside one bar's width. Below about 50 Hz the peak can
+land a bar or two low, where spectral leakage is wider than the bars.
+
+Loopback is shared-mode, so a player holding the device in exclusive mode
+(WASAPI exclusive, ASIO) will show nothing. That is the API's behaviour, not a
+fault in the capture.
 
 ## Firmware
 

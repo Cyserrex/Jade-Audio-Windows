@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using JadeAudioControl.Audio;
 using JadeAudioControl.Cloud;
 using JadeAudioControl.Compat;
 using JadeAudioControl.Controls;
@@ -37,6 +38,9 @@ public partial class MainWindow : Window
     private List<CloudPreset> _libraryPresets = new();
     private CloudPreset? _selectedPreset;
     private (int Major, int Minor) _firmware = (-1, -1);
+    private LoopbackCapture? _capture;
+    private SpectrumAnalyser? _analyser;
+    private DispatcherTimer? _spectrumTimer;
     private FirmwareCheck? _firmwareCheck;
 
     public MainWindow()
@@ -257,6 +261,67 @@ public partial class MainWindow : Window
     }
 
     private async void Reconnect_Click(object sender, RoutedEventArgs e) => await ConnectAsync();
+
+    // -- live spectrum -------------------------------------------------------
+
+    /// <summary>
+    /// Listen to what the dongle is playing and draw it behind the EQ curve.
+    ///
+    /// This is WASAPI loopback on the endpoint itself, so it shows the audio
+    /// after the device's own EQ has been applied - which is the point: you can
+    /// see what a band is doing to real music while you drag it.
+    /// </summary>
+    private void Spectrum_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (SpectrumToggle.IsChecked == true)
+            StartSpectrum();
+        else
+            StopSpectrum();
+    }
+
+    private void StartSpectrum()
+    {
+        if (_capture is not null)
+            return;
+
+        _capture = new LoopbackCapture();
+        _analyser = new SpectrumAnalyser(96, 20, 20000);
+
+        if (!_capture.Start(_device?.ProductName))
+        {
+            Status(_capture.Error ?? "Could not listen to the playback device.");
+            _capture.Dispose();
+            _capture = null;
+            _analyser = null;
+            SpectrumToggle.IsChecked = false;
+            return;
+        }
+
+        Status($"Listening to {_capture.EndpointName}.");
+        _spectrumTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+        _spectrumTimer.Tick += (_, _) =>
+        {
+            if (_capture is null || _analyser is null)
+                return;
+            _analyser.Update(_capture);
+            Curve.Spectrum = _analyser.Levels;
+            Curve.SpectrumPeaks = _analyser.Peaks;
+            Curve.InvalidateVisual();
+        };
+        _spectrumTimer.Start();
+    }
+
+    private void StopSpectrum()
+    {
+        _spectrumTimer?.Stop();
+        _spectrumTimer = null;
+        _capture?.Dispose();
+        _capture = null;
+        _analyser = null;
+        Curve.Spectrum = null;
+        Curve.SpectrumPeaks = null;
+        Curve.InvalidateVisual();
+    }
 
     // -- firmware ------------------------------------------------------------
 
@@ -1096,6 +1161,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        StopSpectrum();
         _device?.Dispose();
         base.OnClosed(e);
     }

@@ -47,6 +47,10 @@ public sealed class EqCurve : FrameworkElement
     private int _dragging = -1;
     private int _hover = -1;
 
+    /// <summary>Live spectrum drawn behind everything, 0..1 per bar. Null hides it.</summary>
+    public double[]? Spectrum { get; set; }
+    public double[]? SpectrumPeaks { get; set; }
+
     public double DbSpan { get; set; } = 15;
     public (double Min, double Max) GainRange { get; set; } = (-12, 12);
 
@@ -175,6 +179,8 @@ public sealed class EqCurve : FrameworkElement
 
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, w, h));
 
+        DrawSpectrum(dc, w, h);
+
         var gridPen = new Pen(new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), 1);
         var zeroPen = new Pen(new SolidColorBrush(Color.FromArgb(0x60, 0x2F, 0xD4, 0xB5)), 1);
         var labelBrush = new SolidColorBrush(Color.FromRgb(0x6E, 0x77, 0x85));
@@ -240,6 +246,61 @@ public sealed class EqCurve : FrameworkElement
 
         for (int i = 0; i < _bands.Count; i++)
             DrawHandle(dc, i);
+    }
+
+    /// <summary>
+    /// The spectrum sits behind the grid, dim enough that the EQ curve stays the
+    /// thing being read. Bars share the curve's log axis, so a peak in the music
+    /// lines up with the band that would move it.
+    /// </summary>
+    private void DrawSpectrum(DrawingContext dc, double w, double h)
+    {
+        var bars = Spectrum;
+        if (bars is null || bars.Length == 0)
+            return;
+
+        double floor = h - 18;
+        double usable = floor - 8;
+        double barWidth = w / bars.Length;
+
+        var fill = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 1),
+            EndPoint = new Point(0, 0),
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb(0x1A, 0x2F, 0xD4, 0xB5), 0),
+                new GradientStop(Color.FromArgb(0x42, 0x59, 0xB8, 0xFF), 1),
+            },
+        };
+        fill.Freeze();
+
+        for (int i = 0; i < bars.Length; i++)
+        {
+            double level = bars[i];
+            if (level <= 0.004)
+                continue;
+
+            double height = level * usable;
+            double x = i * barWidth;
+            dc.DrawRectangle(fill, null,
+                new Rect(x + 0.5, floor - height, Math.Max(barWidth - 1, 0.8), height));
+        }
+
+        var peaks = SpectrumPeaks;
+        if (peaks is null)
+            return;
+
+        var peakBrush = new SolidColorBrush(Color.FromArgb(0x52, 0x9B, 0xE8, 0xD8));
+        peakBrush.Freeze();
+        for (int i = 0; i < peaks.Length && i < bars.Length; i++)
+        {
+            if (peaks[i] <= 0.01)
+                continue;
+            double y = floor - peaks[i] * usable;
+            dc.DrawRectangle(peakBrush, null,
+                new Rect(i * barWidth + 0.5, y, Math.Max(barWidth - 1, 0.8), 1.4));
+        }
     }
 
     private static FormattedText Label(string text, double size, Brush brush) =>
