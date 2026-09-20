@@ -169,6 +169,18 @@ Loopback is shared-mode, so a player holding the device in exclusive mode
 (WASAPI exclusive, ASIO) will show nothing. That is the API's behaviour, not a
 fault in the capture.
 
+## The faders
+
+The sliders are drawn as mixer faders: a recessed groove, a tick scale, and a
+capped thumb whose bright centre line is the value being read - not the edge of
+a dot.
+
+Gain and volume are not the same kind of control, so they are not drawn the
+same. Volume runs from nothing upward and carries a fill. Gain swings either
+side of zero, so it has no fill at all - a bar growing from the left edge would
+say -6 dB is "40% of something" - and it marks its centre the way a pitch fader
+marks its detent.
+
 ## Naming the spectrum
 
 A plot of frequencies only helps someone who already knows which frequency is

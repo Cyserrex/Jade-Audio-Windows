@@ -83,7 +83,8 @@ public sealed class BandRow : Border
             Value = MathEx.Clamp(band.Gain, gainRange.Min, gainRange.Max),
             TickFrequency = 0.1,
             IsSnapToTickEnabled = true,
-            Style = (Style)Application.Current.Resources["ModernSlider"],
+            // Gain swings either side of zero, so it gets the detented fader.
+            Style = (Style)Application.Current.Resources["CentredSlider"],
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(10, 0, 10, 0),
         };

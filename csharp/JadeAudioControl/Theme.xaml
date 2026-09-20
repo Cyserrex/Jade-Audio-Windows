@@ -193,47 +193,138 @@
         </Setter>
     </Style>
 
-    <!-- Slider: thin track, accent fill, round thumb that grows on hover -->
+    <!-- Fader: a recessed groove with a tick scale and a capped thumb, the way
+         a mixer's pitch fader reads - the cap's centre line is the value, not
+         the edge of a dot. -->
+    <DrawingBrush x:Key="FaderTicks" TileMode="Tile" Stretch="None"
+                  Viewport="0,0,11,6" ViewportUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Brush="#3A424E">
+                <GeometryDrawing.Geometry>
+                    <RectangleGeometry Rect="0,0,1,6" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <LinearGradientBrush x:Key="FaderGroove" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#08090C" Offset="0" />
+        <GradientStop Color="#171B21" Offset="0.55" />
+        <GradientStop Color="#232932" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="FaderCap" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#78838F" Offset="0" />
+        <GradientStop Color="#49525D" Offset="0.42" />
+        <GradientStop Color="#232931" Offset="0.5" />
+        <GradientStop Color="#4E5763" Offset="0.58" />
+        <GradientStop Color="#2B313A" Offset="1" />
+    </LinearGradientBrush>
+
+    <ControlTemplate x:Key="FaderThumb" TargetType="Thumb">
+        <Grid>
+            <Border x:Name="Glow" Width="30" Height="34" CornerRadius="6"
+                    Background="{StaticResource Accent}" Opacity="0" />
+            <Border x:Name="Cap" Width="21" Height="28" CornerRadius="3"
+                    Background="{StaticResource FaderCap}"
+                    BorderBrush="#0B0E12" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="6" ShadowDepth="1.5" Opacity="0.55" Color="Black" />
+                </Border.Effect>
+                <!-- The indicator line: on a real fader this is what you read. -->
+                <Rectangle x:Name="Line" Height="2" Width="17" Fill="#E6EDF5"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+            </Border>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Glow" Property="Opacity" Value="0.18" />
+                <Setter TargetName="Line" Property="Fill" Value="{StaticResource Accent}" />
+            </Trigger>
+            <Trigger Property="IsDragging" Value="True">
+                <Setter TargetName="Glow" Property="Opacity" Value="0.30" />
+                <Setter TargetName="Line" Property="Fill" Value="{StaticResource Accent}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="FaderFilled" TargetType="RepeatButton">
+        <Border Height="9" CornerRadius="4" Margin="0,0,-6,0"
+                Background="{StaticResource AccentGradient}" Opacity="0.32" />
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="FaderEmpty" TargetType="RepeatButton">
+        <Border Background="Transparent" />
+    </ControlTemplate>
+
     <Style x:Key="ModernSlider" TargetType="Slider">
-        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="MinHeight" Value="34" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Slider">
-                    <Grid VerticalAlignment="Center">
-                        <Border Height="4" CornerRadius="2" Background="#2A303A" />
-                        <Border x:Name="Fill" Height="4" CornerRadius="2"
-                                Background="{StaticResource AccentGradient}"
-                                HorizontalAlignment="Left" />
-                        <Track x:Name="PART_Track">
-                            <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="Slider.DecreaseLarge" Opacity="0" Focusable="False" />
-                            </Track.DecreaseRepeatButton>
-                            <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="Slider.IncreaseLarge" Opacity="0" Focusable="False" />
-                            </Track.IncreaseRepeatButton>
-                            <Track.Thumb>
-                                <Thumb x:Name="Thumb" Width="14" Height="14" Cursor="Hand">
-                                    <Thumb.Template>
-                                        <ControlTemplate TargetType="Thumb">
-                                            <Grid>
-                                                <Ellipse x:Name="Glow" Width="22" Height="22"
-                                                         Fill="{StaticResource Accent}" Opacity="0" />
-                                                <Ellipse Width="14" Height="14" Fill="{StaticResource Text}" />
-                                            </Grid>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Glow" Property="Opacity" Value="0.25" />
-                                                </Trigger>
-                                                <Trigger Property="IsDragging" Value="True">
-                                                    <Setter TargetName="Glow" Property="Opacity" Value="0.4" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Thumb.Template>
-                                </Thumb>
-                            </Track.Thumb>
-                        </Track>
+                    <Grid Height="34">
+                        <Rectangle Height="6" Margin="11,3,11,0" VerticalAlignment="Top"
+                                   Fill="{StaticResource FaderTicks}" Opacity="0.75" />
+                        <Border Height="9" Margin="0,9,0,0" CornerRadius="4"
+                                Background="{StaticResource FaderGroove}"
+                                BorderBrush="#05070A" BorderThickness="1" />
+                        <Grid Margin="0,9,0,0">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False"
+                                                  Template="{StaticResource FaderFilled}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False"
+                                                  Template="{StaticResource FaderEmpty}" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="21" Cursor="Hand"
+                                           Template="{StaticResource FaderThumb}" />
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Gain runs either side of zero, so mark the centre the way a pitch
+         fader marks its detent. -->
+    <Style x:Key="CentredSlider" TargetType="Slider" BasedOn="{StaticResource ModernSlider}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid Height="34">
+                        <Rectangle Height="6" Margin="11,3,11,0" VerticalAlignment="Top"
+                                   Fill="{StaticResource FaderTicks}" Opacity="0.75" />
+                        <Rectangle Width="2" Height="10" VerticalAlignment="Top" Margin="0,0,0,0"
+                                   HorizontalAlignment="Center" Fill="{StaticResource Accent}"
+                                   Opacity="0.8" />
+                        <Border Height="9" Margin="0,9,0,0" CornerRadius="4"
+                                Background="{StaticResource FaderGroove}"
+                                BorderBrush="#05070A" BorderThickness="1" />
+                        <Rectangle Width="1" Height="9" Margin="0,9,0,0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Fill="{StaticResource Accent}" Opacity="0.28" />
+                        <Grid Margin="0,9,0,0">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False"
+                                                  Template="{StaticResource FaderEmpty}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False"
+                                                  Template="{StaticResource FaderEmpty}" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="21" Cursor="Hand"
+                                           Template="{StaticResource FaderThumb}" />
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

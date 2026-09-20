@@ -157,7 +157,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Global gain" Style="{StaticResource Caption}"
                                                VerticalAlignment="Center" Width="78" />
-                                    <Slider x:Name="PreampSlider" Grid.Column="1" Style="{StaticResource ModernSlider}"
+                                    <Slider x:Name="PreampSlider" Grid.Column="1" Style="{StaticResource CentredSlider}"
                                             Minimum="-12" Maximum="12" TickFrequency="0.1" IsSnapToTickEnabled="True"
                                             ValueChanged="Preamp_Changed" />
                                     <TextBlock x:Name="PreampValue" Grid.Column="2" Text="0.0 dB"
