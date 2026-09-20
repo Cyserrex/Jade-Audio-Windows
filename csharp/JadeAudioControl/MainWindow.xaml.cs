@@ -408,7 +408,7 @@ public partial class MainWindow : Window
 
         for (int i = 0; i < _bands.Count; i++)
         {
-            var row = new BandRow(_bands[i], i, _caps.GainRange, allowed);
+            var row = new BandRow(_bands[i], i, _caps.GainRange, allowed, BandRow.Layout.Strip);
             int index = i;
             row.Changed += (_, _) =>
             {

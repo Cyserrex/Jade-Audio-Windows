@@ -15,11 +15,11 @@ namespace JadeAudioControl.Controls;
 /// </summary>
 public sealed class BandRow : Border
 {
-    private readonly TextBox _freq;
-    private readonly Slider _gain;
-    private readonly TextBlock _gainLabel;
-    private readonly TextBox _q;
-    private readonly ComboBox _type;
+    private TextBox _freq = null!;
+    private Slider _gain = null!;
+    private TextBlock _gainLabel = null!;
+    private TextBox _q = null!;
+    private ComboBox _type = null!;
     private bool _suspend;
 
     public int Index { get; }
@@ -28,15 +28,30 @@ public sealed class BandRow : Border
     public event EventHandler? Changed;
     public event EventHandler? Focused;
 
-    public BandRow(Band band, int index, (double Min, double Max) gainRange, FilterType[] allowed)
+    /// <summary>Row lays the band out across the window; Strip stands it on end.</summary>
+    public enum Layout
+    {
+        Row,
+        Strip,
+    }
+
+    public BandRow(Band band, int index, (double Min, double Max) gainRange, FilterType[] allowed,
+                   Layout layout = Layout.Row)
     {
         Band = band;
         Index = index;
+        _allowed = allowed;
 
         Background = (Brush)Application.Current.Resources["Surface"];
         BorderBrush = (Brush)Application.Current.Resources["Stroke"];
         BorderThickness = new Thickness(1);
         CornerRadius = new CornerRadius(10);
+        if (layout == Layout.Strip)
+        {
+            BuildStrip(band, index, gainRange, allowed);
+            return;
+        }
+
         Padding = new Thickness(12, 7, 12, 7);
         Margin = new Thickness(0, 0, 0, 6);
 
@@ -130,12 +145,121 @@ public sealed class BandRow : Border
         Grid.SetColumn(_type, 5);
         grid.Children.Add(_type);
 
-        _allowed = allowed;
         Child = grid;
 
         MouseLeftButtonDown += (_, _) => Focused?.Invoke(this, EventArgs.Empty);
         _gain.GotMouseCapture += (_, _) => Focused?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// A mixer channel: number and frequency on top, the fader down the middle,
+    /// then the reading, Q and filter shape - read top to bottom like a strip.
+    /// </summary>
+    private void BuildStrip(Band band, int index, (double Min, double Max) gainRange,
+                            FilterType[] allowed)
+    {
+        Padding = new Thickness(8, 10, 8, 10);
+        Margin = new Thickness(0, 0, 6, 0);
+        Width = 118;
+
+        var stack = new StackPanel();
+
+        var color = EqCurve.BandColors[index % EqCurve.BandColors.Length];
+        stack.Children.Add(new Border
+        {
+            Width = 24,
+            Height = 24,
+            CornerRadius = new CornerRadius(7),
+            Background = new SolidColorBrush(color),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Child = new TextBlock
+            {
+                Text = (index + 1).ToString(CultureInfo.InvariantCulture),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x13)),
+                FontSize = 11,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        });
+
+        _freq = MakeTextBox(band.Frequency.ToString(CultureInfo.InvariantCulture), 84);
+        _freq.ToolTip = "Centre frequency in Hz";
+        _freq.TextAlignment = TextAlignment.Center;
+        _freq.Margin = new Thickness(0, 10, 0, 0);
+        _freq.HorizontalAlignment = HorizontalAlignment.Center;
+        stack.Children.Add(_freq);
+        stack.Children.Add(Caption("Hz", 2));
+
+        _gain = new Slider
+        {
+            Minimum = gainRange.Min,
+            Maximum = gainRange.Max,
+            Value = MathEx.Clamp(band.Gain, gainRange.Min, gainRange.Max),
+            TickFrequency = 0.1,
+            IsSnapToTickEnabled = true,
+            Style = (Style)Application.Current.Resources["VerticalCentredSlider"],
+            Height = 152,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 10, 0, 0),
+        };
+        _gain.ValueChanged += (_, _) =>
+        {
+            if (_gainLabel is not null)
+                _gainLabel.Text = FormatGain(_gain.Value);
+            OnEdit();
+        };
+        stack.Children.Add(_gain);
+
+        _gainLabel = new TextBlock
+        {
+            Text = FormatGain(band.Gain),
+            TextAlignment = TextAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Foreground = (Brush)Application.Current.Resources["Text"],
+            FontSize = 12.5,
+            FontFamily = (FontFamily)Application.Current.Resources["UiFont"],
+            Margin = new Thickness(0, 8, 0, 0),
+        };
+        stack.Children.Add(_gainLabel);
+
+        _q = MakeTextBox(band.Q.ToString("0.00", CultureInfo.InvariantCulture), 84);
+        _q.ToolTip = "Q - how wide the band is";
+        _q.TextAlignment = TextAlignment.Center;
+        _q.Margin = new Thickness(0, 10, 0, 0);
+        _q.HorizontalAlignment = HorizontalAlignment.Center;
+        stack.Children.Add(_q);
+        stack.Children.Add(Caption("Q", 2));
+
+        _type = new ComboBox
+        {
+            Style = (Style)Application.Current.Resources["ModernCombo"],
+            Width = 100,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 10, 0, 0),
+            FontSize = 11.5,
+        };
+        foreach (var option in allowed)
+            _type.Items.Add(Pretty(option));
+        _type.SelectedIndex = Math.Max(0, Array.IndexOf(allowed, band.Type));
+        _type.SelectionChanged += (_, _) => OnEdit();
+        stack.Children.Add(_type);
+
+        Child = stack;
+
+        MouseLeftButtonDown += (_, _) => Focused?.Invoke(this, EventArgs.Empty);
+        _gain.GotMouseCapture += (_, _) => Focused?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static TextBlock Caption(string text, double top) => new()
+    {
+        Text = text,
+        TextAlignment = TextAlignment.Center,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Foreground = (Brush)Application.Current.Resources["Muted"],
+        FontSize = 10.5,
+        Margin = new Thickness(0, top, 0, 0),
+    };
 
     private readonly FilterType[] _allowed;
 

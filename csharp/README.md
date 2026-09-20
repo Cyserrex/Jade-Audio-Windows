@@ -171,9 +171,14 @@ fault in the capture.
 
 ## The faders
 
-The sliders are drawn as mixer faders: a recessed groove, a tick scale, and a
-capped thumb whose bright centre line is the value being read - not the edge of
-a dot.
+The equaliser is laid out as a mixer: one channel strip per band, standing side
+by side, with the master gain and the output volume as their own strips on the
+right. Each strip reads top to bottom - number, frequency, fader, gain, Q,
+filter shape.
+
+The faders themselves are drawn the way a mixer draws them: a recessed groove, a
+tick scale beside it, and a capped thumb whose bright centre line is the value
+being read - not the edge of a dot.
 
 Gain and volume are not the same kind of control, so they are not drawn the
 same. Volume runs from nothing upward and carries a fill. Gain swings either

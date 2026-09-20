@@ -34,9 +34,11 @@ other.
   playing, drawn behind the EQ curve on the same axis, so you can see what a
   band does to real music while you drag it. On by default; the toolbar toggle
   turns it off. It listens through WASAPI loopback; nothing is recorded.
-- **Mixer-style faders** — a recessed groove, a tick scale and a capped thumb
-  with a centre indicator line. Gain faders mark their zero detent and carry no
-  fill, since gain runs either side of zero.
+- **Laid out as a mixer** — one vertical channel strip per band, side by side,
+  with master gain and output volume as their own strips. Faders have a
+  recessed groove, a tick scale and a capped thumb with a centre indicator
+  line; gain faders mark their zero detent and carry no fill, since gain runs
+  either side of zero.
 - **Device** — what the dongle reports about itself, a firmware check, and
   backup/restore of every preset to a JSON file. The check compares the
   installed version against a published list and points at FiiO's download page;
