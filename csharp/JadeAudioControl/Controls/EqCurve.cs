@@ -59,6 +59,11 @@ public sealed class EqCurve : FrameworkElement
 
     public int SelectedIndex { get; private set; } = -1;
 
+    /// <summary>Name the parts of the spectrum along the top of the plot.</summary>
+    public bool ShowZones { get; set; } = true;
+
+    private const double ZoneStripHeight = 17;
+
     public EqCurve()
     {
         ClipToBounds = true;
@@ -93,17 +98,12 @@ public sealed class EqCurve : FrameworkElement
         return Math.Pow(10, lo + t * (hi - lo));
     }
 
-    private double YOf(double db)
-    {
-        double half = ActualHeight / 2;
-        return half - db / DbSpan * (half - 14);
-    }
+    /// <summary>Half the plot height, less the room taken by the labels.</summary>
+    private double PlotHalf => ActualHeight / 2 - (ShowZones ? 24 : 14);
 
-    private double DbOf(double y)
-    {
-        double half = ActualHeight / 2;
-        return (half - y) / Math.Max(half - 14, 1) * DbSpan;
-    }
+    private double YOf(double db) => ActualHeight / 2 - db / DbSpan * PlotHalf;
+
+    private double DbOf(double y) => (ActualHeight / 2 - y) / Math.Max(PlotHalf, 1) * DbSpan;
 
     // -- filter maths --------------------------------------------------------
 
@@ -180,6 +180,7 @@ public sealed class EqCurve : FrameworkElement
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, w, h));
 
         DrawSpectrum(dc, w, h);
+        DrawZones(dc, w, h);
 
         var gridPen = new Pen(new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), 1);
         var zeroPen = new Pen(new SolidColorBrush(Color.FromArgb(0x60, 0x2F, 0xD4, 0xB5)), 1);
@@ -249,6 +250,55 @@ public sealed class EqCurve : FrameworkElement
     }
 
     /// <summary>
+    /// A strip of names across the top: sub-bass through treble, on the same
+    /// log axis as everything else. A plot of frequencies is only useful to
+    /// someone who already knows which frequency is which, and this says so.
+    /// </summary>
+    private void DrawZones(DrawingContext dc, double w, double h)
+    {
+        if (!ShowZones || h < 90)
+            return;
+
+        var stripBrush = new SolidColorBrush(Color.FromArgb(0x30, 0x00, 0x00, 0x00));
+        stripBrush.Freeze();
+        dc.DrawRectangle(stripBrush, null, new Rect(0, 0, w, ZoneStripHeight));
+
+        var edge = new Pen(new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF)), 1);
+        edge.Freeze();
+        dc.DrawLine(edge, new Point(0, ZoneStripHeight + 0.5), new Point(w, ZoneStripHeight + 0.5));
+
+        var labelBrush = new SolidColorBrush(Color.FromRgb(0x7C, 0x87, 0x96));
+        labelBrush.Freeze();
+        var tintBrush = new SolidColorBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF));
+        tintBrush.Freeze();
+
+        var zones = FrequencyZones.All;
+        for (int i = 0; i < zones.Count; i++)
+        {
+            double left = XOf(zones[i].Low);
+            double right = XOf(zones[i].High);
+            double width = right - left;
+
+            if (i % 2 == 1)
+                dc.DrawRectangle(tintBrush, null, new Rect(left, 0, width, ZoneStripHeight));
+
+            if (i > 0)
+                dc.DrawLine(edge, new Point(Math.Round(left) + 0.5, 0),
+                                  new Point(Math.Round(left) + 0.5, ZoneStripHeight));
+
+            // Drop to the short name, then to nothing, rather than overflow.
+            var text = Label(zones[i].Name, 9.5, labelBrush);
+            if (text.Width > width - 8)
+                text = Label(zones[i].ShortName, 9.5, labelBrush);
+            if (text.Width > width - 4)
+                continue;
+
+            dc.DrawText(text, new Point(left + (width - text.Width) / 2,
+                                        (ZoneStripHeight - text.Height) / 2));
+        }
+    }
+
+    /// <summary>
     /// The spectrum sits behind the grid, dim enough that the EQ curve stays the
     /// thing being read. Bars share the curve's log axis, so a peak in the music
     /// lines up with the band that would move it.
@@ -260,7 +310,7 @@ public sealed class EqCurve : FrameworkElement
             return;
 
         double floor = h - 18;
-        double usable = floor - 8;
+        double usable = floor - (ShowZones ? ZoneStripHeight + 6 : 8);
         double barWidth = w / bars.Length;
 
         var fill = new LinearGradientBrush

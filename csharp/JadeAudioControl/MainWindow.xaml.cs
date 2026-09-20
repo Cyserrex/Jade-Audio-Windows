@@ -427,6 +427,20 @@ public partial class MainWindow : Window
         Curve.SetSelected(index);
         for (int i = 0; i < _rows.Count; i++)
             _rows[i].SetActive(i == index);
+
+        if (index >= 0 && index < _bands.Count)
+            ShowBandZone(index);
+    }
+
+    /// <summary>
+    /// Say which part of the spectrum the band sits in, and what that part
+    /// does - a frequency is only meaningful to someone who already knows the
+    /// map, and this is where the map gets read out.
+    /// </summary>
+    private void ShowBandZone(int index)
+    {
+        var band = _bands[index];
+        Status($"Band {index + 1} at {band.Frequency} Hz - {FrequencyZones.Describe(band.Frequency)}");
     }
 
     private void Curve_BandDragged(object? sender, BandDragEventArgs e)

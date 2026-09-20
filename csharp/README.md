@@ -36,9 +36,10 @@ can be saved to your own account, and deleted from it again.
 
 ![Preset library](docs/library.png)
 
-**Live spectrum** — an optional overlay showing what the dongle is playing,
-behind the EQ curve and on the same log axis, so a peak in the music lines up
-with the band that would move it.
+**Live spectrum** — an overlay showing what the dongle is playing, behind the EQ
+curve and on the same log axis, so a peak in the music lines up with the band
+that would move it. Across the top, the spectrum is named: sub-bass through
+treble, with the band you are touching described in the status bar.
 
 ![Live spectrum](docs/spectrum.png)
 
@@ -96,6 +97,7 @@ Releases are built by GitHub Actions rather than by hand - see
 | `Protocol/JadeDevice.cs` | serialised request/reply, typed accessors, capability probe |
 | `Cloud/CloudClient.cs` | the encrypted preset API and the account session |
 | `Controls/EqCurve.cs` | the response plot, the spectrum overlay and drag handling |
+| `Controls/FrequencyZones.cs` | the named parts of the spectrum and what each does |
 | `Audio/WasapiInterop.cs` | the WASAPI COM surface, declared by hand |
 | `Audio/LoopbackCapture.cs` | shared-mode loopback on the playback endpoint |
 | `Audio/SpectrumAnalyser.cs` | Hann window, radix-2 FFT, log-axis bands |
@@ -166,6 +168,25 @@ turns it off, which also stops the capture thread.
 Loopback is shared-mode, so a player holding the device in exclusive mode
 (WASAPI exclusive, ASIO) will show nothing. That is the API's behaviour, not a
 fault in the capture.
+
+## Naming the spectrum
+
+A plot of frequencies only helps someone who already knows which frequency is
+which, so the plot says it: a strip along the top marks sub-bass, bass, low
+mids, midrange, upper mids and treble, and touching a band writes the range and
+what it does into the status bar.
+
+| zone | range | what moving it does |
+| --- | --- | --- |
+| Sub-bass | 20-60 Hz | weight and rumble you feel more than hear |
+| Bass | 60-250 Hz | the body of kick, bass guitar and low synths |
+| Low mids | 250-500 Hz | warmth; too much here is the classic muddy sound |
+| Midrange | 500 Hz-2 kHz | where most voices and instruments actually live |
+| Upper mids | 2-6 kHz | presence and bite; too much is shouty and tiring |
+| Treble | 6-20 kHz | detail, cymbals and air; too much turns sibilant |
+
+The boundaries are the conventional ones and the edges are soft in practice -
+nothing changes character at exactly 250 Hz.
 
 ## Firmware
 
