@@ -159,6 +159,10 @@ Verified against tones played through the dongle: 500 Hz reads 492, 2 kHz reads
 1929, 8 kHz reads 8136 — inside one bar's width. Below about 50 Hz the peak can
 land a bar or two low, where spectral leakage is wider than the bars.
 
+It starts with the app, once the device has been found - the endpoint is chosen
+by name, and before then there is no name to match. The toggle in the toolbar
+turns it off, which also stops the capture thread.
+
 Loopback is shared-mode, so a player holding the device in exclusive mode
 (WASAPI exclusive, ASIO) will show nothing. That is the API's behaviour, not a
 fault in the capture.

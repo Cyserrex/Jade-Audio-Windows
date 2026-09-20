@@ -53,6 +53,10 @@ public partial class MainWindow : Window
         Loaded += async (_, _) =>
         {
             await ConnectAsync();
+            // On by default, but only once the device is known: the capture
+            // picks its endpoint by name, and before ConnectAsync there is no
+            // name to match, so it would settle for the Windows default.
+            SpectrumToggle.IsChecked = true;
             await RestoreSessionAsync();
         };
         Curve.BandDragged += Curve_BandDragged;
